@@ -2,7 +2,7 @@
 .DS_Store
 
 # Maven
-target/
+**/target/
 
 # IntelliJ IDEA (regenerated on import — do not commit)
 .idea/
