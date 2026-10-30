@@ -20,6 +20,71 @@ hide empty members
 ' (Putting the parent/interface on the LEFT of the arrow keeps it on top, which
 '  is the convention used in these notes.)
 
+' Design notes:
+' - Member and Librarian share no behaviour beyond "can log in". That common part
+'   lives in LibrarySession, and the session subtype decides what a logged-in user
+'   may do, so there is no Member/Librarian supertype.
+' - Sessions are not nouns in the spec; they are added to enforce "only librarians
+'   can add items / waive late fees". All classes share one package: logging in is
+'   the only way to get a session (package-private constructors), and Library's
+'   state-changing operations are package-private (~), so only sessions reach them.
+' - Whether an item is on loan is recorded twice (BorrowableItem.onLoan and
+'   Library.loans). That trade-off is discussed in Question 2.
+
+abstract class LibrarySession {
+  # library : Library
+}
+LibrarySession --> "1" Library
+
+LibrarySession <|-- MemberSession
+class MemberSession {
+  - member : Member
+  ~ MemberSession(library : Library, member : Member)
+  + borrow(item : BorrowableItem) : Loan
+  + placeHold(item : BorrowableItem) : Hold
+  + getLoans() : List<Loan>
+  + getHolds() : List<Hold>
+}
+MemberSession --> "1" Member
+
+LibrarySession <|-- StaffSession
+class StaffSession {
+  - librarian : Librarian
+  ~ StaffSession(library : Library, librarian : Librarian)
+  + addItem(item : Item) : boolean
+  + waiveLateFee(member : Member) : void
+}
+StaffSession --> "1" Librarian
+
+class Library {
+  - catalogue : Catalogue
+  - members : List<Member>
+  - staff : List<Librarian>
+  - loans : List<Loan>
+  - holds : List<Hold>
+  + memberLogin(memberNumber : String) : MemberSession
+  + staffLogin(staffNumber : String) : StaffSession
+  + findItem(catalogueNumber : String) : Item
+  ~ borrow(member : Member, item : BorrowableItem) : Loan
+  ~ placeHold(member : Member, item : BorrowableItem) : Hold
+  ~ loansFor(member : Member) : List<Loan>
+  ~ holdsFor(member : Member) : List<Hold>
+  ~ addItem(item : Item) : boolean
+  ~ waiveLateFee(member : Member) : void
+}
+Library o--> "1" Catalogue
+Library o--> "*" Member
+Library o--> "*" Librarian
+Library o--> "*" Loan
+Library o--> "*" Hold
+
+class Catalogue {
+  - items : List<Item>
+  + findByNumber(n : String) : Item
+  ~ addItem(item : Item) : boolean
+}
+
+Catalogue o--> "*" Item
 abstract class Item {
   - title : String
   - catalogueNumber : String
@@ -27,19 +92,56 @@ abstract class Item {
   + getCatalogueNumber() : String
 }
 
-' TODO: add boxes for Book and DVD. What differs between them — a whole class,
-'       or just the value of a loan-period field?
+Item <|-- ReferenceItem
 
-' TODO: reference-only items cannot be borrowed at all. Decide how to say that
-'       in the diagram: a subclass, or an interface (e.g. "Borrowable") that
-'       only some items realize?
+Item <|-- BorrowableItem
+abstract class BorrowableItem {
+  - onLoan : boolean
+  + isOnLoan() : boolean
+  ~ loan() : boolean
+  + {abstract} loanPeriod() : int
+}
 
-' TODO: add Member and Librarian. What do they have in common? Add the common
-'       supertype if you think one is warranted.
+BorrowableItem <|-- Book
+class Book {
+  - {static} LOAN_PERIOD_DAYS : int
+  + loanPeriod() : int
+}
 
-' TODO: add whatever represents a hold, and connect it to the classes that need
-'       to know about it.
+BorrowableItem <|-- DVD
+class DVD {
+  - {static} LOAN_PERIOD_DAYS : int
+  + loanPeriod() : int
+}
 
-' TODO: add the arrows between all of your types.
+class Loan {
+  - member : Member
+  - item : BorrowableItem
+  - borrowDate : Date
+  - dueDate : Date
+}
+Loan --> "1" BorrowableItem
+Loan --> "1" Member
+
+class Hold {
+  - member : Member
+  - item : BorrowableItem
+  - datePlaced : Date
+}
+Hold --> "1" BorrowableItem
+Hold --> "1" Member
+
+class Member {
+  - memberNumber : String
+  - lateFee : double
+  + getMemberNumber() : String
+  + getLateFee() : double
+  ~ clearLateFee() : void
+}
+
+class Librarian {
+  - staffNumber : String
+  + getStaffNumber() : String
+}
 
 @enduml
