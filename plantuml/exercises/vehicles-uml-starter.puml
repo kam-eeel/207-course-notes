@@ -25,17 +25,14 @@ interface Chargeable {
 abstract class Vehicle {
   # make : String
   + Vehicle(make : string)
-  + maxSpeed() : int
+  + {abstract} maxSpeed() : int
 }
 
-Vehicle <|-- Car
 class Car {
   + Car(make : string)
   + maxSpeed() : int
 }
 
-Car <|-- ElectricCar
-Chargeable <|.. ElectricCar
 class ElectricCar {
   - batteryLevel : int
   + ElectricCar(make : String)
@@ -43,4 +40,7 @@ class ElectricCar {
   + charge() : void
 }
 
+Vehicle <|-- Car
+Car <|-- ElectricCar
+Chargeable <|.. ElectricCar
 @enduml
