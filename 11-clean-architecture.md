@@ -22,6 +22,8 @@ The Clean Architecture has one rule, called the **"Dependency Rule"**. This rule
 
 > Review Question: Why shouldn't a high-level policy depend on a low-level policy?
 
+**Answer:** Low-level details (UI, database, frameworks) change far more often than business rules. If the core depended on them, every UI or storage change would ripple into the core logic. You also couldn't test or reuse the core without dragging the details along. Things that change least should be what everything else depends on.
+
 This is often visualized through the following concentric ring diagram. The highest-level policies, the Entities, are at the core of the architecture, with the lowest-level policies, the Frameworks and Drivers, on the outside of the architecture.
 
 ![](https://blog.cleancoder.com/uncle-bob/images/2012-08-13-the-clean-architecture/CleanArchitecture.jpg)
@@ -38,6 +40,11 @@ In the CA book, a typical scenario is presented. Below is a UML class diagram fo
 When we create instances of the various classes shown above and connect them together, we are constructing what we will refer to as our "CA engine".
 
 > Thought Question: Take a minute to study the diagram. Can you identify where the DIP has been applied to ensure that we are following the Dependency Rule?
+
+**Answer:** At the three interfaces in the use-case layer:
+- **Output Boundary:** the Interactor needs to call *outward* to the Presenter. Instead, it calls an interface it owns, and the Presenter implements it. Control flows out, but the dependency points in.
+- **Data Access Interface:** same idea for persistence. The Interactor calls the interface, and the outer-layer Data Access class implements it.
+- **Input Boundary:** the Controller depends on an interface rather than on the concrete Interactor, so interactors can be swapped (ex. for testing).
 
 ## 11.3. Clean Architecture By Layer
 Before we fully talk through how we construct the CA engine and trace the flow of control, let's quickly look at all the pieces that make up our CA engine. Refer to the diagram as you read about each piece. 
@@ -114,6 +121,8 @@ The following diagram is the same one we just looked at, but with the flow of co
 
 > Thought Question: Note how we never actually return anything to the Controller. What does this suggest about the return type of the method defined by the Input Boundary?
 
+**Answer:** The return type is `void`. Results leave through the Output Boundary to the Presenter, not back up the call stack to the controller.
+
 ## 11.5. The Main Component
 
 We now know the structure of the classes and interfaces involved, as well as how information flows through our CA engine, but how do we actually build our CA engine in the first place.
@@ -128,5 +137,26 @@ What this means is that we can create a different main component, sometimes call
 
 > Thought Question: Can you imagine how the code for constructing the CA engine might look in practice? We'll see concrete code examples soon, but for now it is a good exercise to think through your mental model of how our above conceptual discussion and the high-level UML class diagram of the CA engine might turn into concrete code.
 
+**Answer:**
+```java
+public class Main {
+    public static void main(String[] args) {
+        ViewModel viewModel = new ViewModel();
+        OutputBoundary presenter = new Presenter(viewModel);
+        DataAccessInterface dataAccess = new FileDataAccess("data.csv");
+        InputBoundary interactor = new Interactor(dataAccess, presenter);
+        Controller controller = new Controller(interactor);
+        View view = new View(controller, viewModel);
+        view.setVisible(true);
+    }
+}
+```
+
 > Thought Question: Can you identify specific aspects of the design of the Clean Architecture that remind you of each SOLID principle?
- 
+
+**Answer:**
+- **SRP:** each class has one job. The Controller converts input, the Presenter formats output, each Interactor handles one use case, and Data Access handles persistence.
+- **OCP:** a new UI or database is a new implementation of an existing boundary, and the interactor doesn't change.
+- **LSP:** any Presenter/Data Access implementation, including test fakes, must work wherever the boundary interface is expected.
+- **ISP:** the boundaries are small and specific to each use case. The Controller only sees the Input Boundary, and Input/Output Data carry only what's needed.
+- **DIP:** the Dependency Rule itself. The three boundary interfaces let control flow outward while dependencies point inward.

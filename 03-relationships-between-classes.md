@@ -161,7 +161,7 @@ class Corn extends Plant implements Edible, Washable {
     void eat() {
         ...    // Our implementation here!
     }
-    
+
     // Overriding the default wash method
     @Override
     public void wash() {
@@ -252,7 +252,7 @@ a new instance of our subclass.
 
 ## 3.4. Polymorphism
 
-**Polymorphism** is the ability of an object to take on many forms. 
+**Polymorphism** is the ability of an object to take on many forms.
 In Java, this means that an object can be treated as an instance of its own class,
 any superclass, or any interface it implements.
 
@@ -281,9 +281,9 @@ System.out.println(d instanceof Domesticatable);   // true
 ```
 
 > **Note:** `instanceof` in Java is not strictly limited to parent/child class
-> relationships.  
+> relationships.
 > An object is considered an instance of a class or interface if it can be
-> **safely cast** to that type.  
+> **safely cast** to that type.
 > This includes interfaces — any object that implements an interface will pass
 > `instanceof` checks for that interface.
 
@@ -594,7 +594,7 @@ Emoji Movie (10): Cinematic malware; likes = 0
 Despicable Me 3 (60): Zany but scattershot humour; likes = 0
 Dunkirk (95): Gifted ensemble cast and masterful direction; likes = 0
 Spider Man: Homecoming (95): A fun adventure; likes = 0
-My Neighbour Totoro (99): A work of art; likes = 0 
+My Neighbour Totoro (99): A work of art; likes = 0
 ```
 
 ### 3.6.4. Being comparable enables more
@@ -615,7 +615,7 @@ kind of comparison we want. A "comparator" class implements the
 `Comparator` interface, which requires this method:
 
 ```java
-int compare(T o1, T o2)    
+int compare(T o1, T o2)
     Compares its two arguments for order.
     Returns a negative integer, zero, or a positive integer
     as the first argument is less than, equal to, or greater
@@ -686,7 +686,7 @@ We can define another `Comparator` that orders `Review` objects differently. Thi
 
 ```java
 import java.util.Comparator;
- 
+
 
 class TextComparator implements Comparator<Review> {
 
@@ -748,7 +748,7 @@ If you are the author of the class, you have both options available to you!
 
 When a design has more than a couple of classes, a picture is often clearer than
 the code. A **UML class diagram** is a standard, language-independent way to
-sketch the classes in a system and the relationships between them (inheritance, interfaces, "has-a"). 
+sketch the classes in a system and the relationships between them (inheritance, interfaces, "has-a").
 You have  already seen such diagrams in the design-patterns material; here we cover just
 enough notation to *read* one and *translate* between a diagram and Java.
 
@@ -870,7 +870,7 @@ Below is a breakdown of how to write the code and generate the final image.
 
 - `hide empty members` cleans up the visual by hiding fields or methods sections if they are blank.
 
-- Defining Elements: You declare types using keywords like interface or class, followed by their names. 
+- Defining Elements: You declare types using keywords like interface or class, followed by their names.
   Inside the curly braces `{...}`, you define fields and methods using access modifiers:
 
   - `-` (Minus) indicates a private member (e.g., `- radius : double`).
@@ -898,6 +898,46 @@ headers, fields, and method signatures — you can leave the method bodies as
 `extends`, and which `implements`?
 
 ![UML diagram of an Account hierarchy](images/uml-accounts.png)
+
+```java
+abstract class Account {
+    protected double balance;
+
+    public Account(double balance) {
+        this.balance = balance;
+    }
+
+    public void deposit(double amount) { ... }
+
+    public abstract boolean withdraw(double amount);
+}
+
+interface InterestBearing {
+    void addInterest();
+}
+
+class ChequingAccount extends Account {
+    private double overdraftLimit;
+
+    public ChequingAccount(double balance) {
+        super(balance);
+    }
+
+    public boolean withdraw(double amount) { ... }
+}
+
+class SavingsAccount extends Account implements InterestBearing {
+    private double rate;
+
+    public SavingsAccount(double balance) {
+        super(balance);
+    }
+
+    public boolean withdraw(double amount) { ... }
+
+    public void addInterest() { ... }
+}
+```
 
 <details>
 <summary>Show answer</summary>

@@ -65,6 +65,15 @@ To connect this back to our analogy: If someone has already proven a theorem thr
 
 > Exercise: As you read about each design pattern, think about how you could "derive" each pattern using one or more of our principles.
 
+**Answer:**
+- **Simple Factory:** SRP (object creation lives in one class) and DIP (clients depend on the product interface; only the factory names concrete classes).
+- **Abstract Factory:** DIP (clients see only the abstract factory and abstract products) and OCP (a new product family is a new factory class, with no client changes).
+- **Builder:** SRP (step-by-step construction is separated from the object itself, which avoids huge constructors).
+- **Strategy:** OCP (a new algorithm is a new class), DIP (the context depends on the strategy interface), and LSP (any strategy can be swapped in).
+- **Observer:** DIP (the subject knows only the observer interface) and OCP (add observers without changing the subject).
+- **Façade:** ISP (clients get one small interface instead of the whole subsystem) and lower coupling to the subsystem's classes.
+- **Adapter:** OCP (reuse a class with an incompatible interface without modifying it), DIP (the client depends on the target interface), and LSP (the adapter must behave as a valid target).
+
 ### 12.1.3. A Brief History
 
 <img src="https://m.media-amazon.com/images/I/51nL96Abi1L._SY522_.jpg" height=200px align="right" alt="cover of the design patterns book"/>

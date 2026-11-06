@@ -38,7 +38,9 @@ In layered architectures, the goal is to keep high-level policies independent of
 
 Now that we’ve seen how layered architectures can naturally separate policies by level, let’s take a closer look at how programs behave when they run.
 
-> Thought Question: What might a “policy” look like in your code? Is it a method, a class, a rule enforced by a conditional, or something else? 
+> Thought Question: What might a “policy” look like in your code? Is it a method, a class, a rule enforced by a conditional, or something else?
+
+**Answer:** Usually a rule enforced by a conditional, wrapped in a method of the class that owns the data, e.g. `if (balance - amount < -1000) return false;` inside `Account.withdraw`. The class's invariants are the policy, and its methods are where the policy is enforced.
 
 ## 10.1. Event-driven programming: a network of objects
 
@@ -51,6 +53,8 @@ This chain creates a network of objects, where each method call represents a con
 To support new user interactions, we write new event listeners and define how they should respond. This connects the user input to the logic that drives our application.
 
 > Review Question: Is an event listener a low-level or high-level policy?
+
+**Answer:** Low-level. It sits right at the input: it receives a raw UI event object and depends on the GUI framework. Its job is to hand off to higher-level code, not to make business decisions.
 
 ## 10.2. Layers and coupling
 
@@ -69,6 +73,8 @@ A **model** is how you choose to represent the data in the program, such as crea
 Models are an important concept, because the entities represent how to think about the data being manipulated. It's particularly important (for testability and maintainability) that models not have any dependencies on the UI layer or the database layer. That means they entities can't mention any classes that you defined in those layers.
 
 > Review Question: What level of policies do entities represent?
+
+**Answer:** The highest-level policies: the core business rules, which stay true regardless of UI, storage, or even which application uses them.
 
 Here are a few _architecture patterns_, or ways to think about the organization of a program. You'll encounter these if you start following software design blogs. These are roughly in chronological order for when they were popular:
 
@@ -142,3 +148,5 @@ We'll explore Clean Architecture in more detail in the next chapter, as it will 
 
 > Thought Question: Recall that computer architecture also has a layered structure to it as we saw earlier, with applications built on top of the operating system, which is built on top of the hardware.
 > You'll find that the idea of layers shows up in many system design contexts. What is it about organizing systems in this way that makes it such a common design?
+
+**Answer:** Each layer only needs to know the *interface* of the layer below, not how it works. That hides complexity, and it lets you swap one layer's implementation (new hardware, new OS, new database) without changing the layers above. Changes stay contained, each layer can be built and tested separately, and different teams can own different layers.

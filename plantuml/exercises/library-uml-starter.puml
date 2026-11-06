@@ -29,7 +29,8 @@ hide empty members
 '   the only way to get a session (package-private constructors), and Library's
 '   state-changing operations are package-private (~), so only sessions reach them.
 ' - Whether an item is on loan is recorded twice (BorrowableItem.onLoan and
-'   Library.loans). That trade-off is discussed in Question 2.
+'   Library.loans). Library.borrow and Library.returnItem keep the two in sync;
+'   the trade-off is discussed in Question 2.
 
 abstract class LibrarySession {
   # library : Library
@@ -41,6 +42,7 @@ class MemberSession {
   - member : Member
   ~ MemberSession(library : Library, member : Member)
   + borrow(item : BorrowableItem) : Loan
+  + returnItem(item : BorrowableItem) : void
   + placeHold(item : BorrowableItem) : Hold
   + getLoans() : List<Loan>
   + getHolds() : List<Hold>
@@ -67,6 +69,7 @@ class Library {
   + findItem(catalogueNumber : String) : Item
   ~ borrow(member : Member, item : BorrowableItem) : Loan
   ~ placeHold(member : Member, item : BorrowableItem) : Hold
+  ~ returnItem(item : BorrowableItem) : void
   ~ loansFor(member : Member) : List<Loan>
   ~ holdsFor(member : Member) : List<Hold>
   ~ addItem(item : Item) : boolean
@@ -99,6 +102,7 @@ abstract class BorrowableItem {
   - onLoan : boolean
   + isOnLoan() : boolean
   ~ loan() : boolean
+  ~ markReturned() : void
   + {abstract} loanPeriod() : int
 }
 
@@ -119,6 +123,8 @@ class Loan {
   - item : BorrowableItem
   - borrowDate : Date
   - dueDate : Date
+  + getMember() : Member
+  + getItem() : BorrowableItem
 }
 Loan --> "1" BorrowableItem
 Loan --> "1" Member
@@ -127,6 +133,8 @@ class Hold {
   - member : Member
   - item : BorrowableItem
   - datePlaced : Date
+  + getMember() : Member
+  + getItem() : BorrowableItem
 }
 Hold --> "1" BorrowableItem
 Hold --> "1" Member

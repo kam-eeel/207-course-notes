@@ -162,6 +162,7 @@ Here are some examples of strings which do not conform:
 > Do any of these strings conform to our regex?
 > "z3333", "aBcB041", "78a"
 
+**Answer:** `"z3333"` and `"aBcB041"` conform: each starts with a lowercase letter, followed only by letters and digits. `"78a"` does not: its first character is a digit, not `a-z`.
 
 ### 14.4.1. What if There Are No Anchors?
 In the previous example, we introduced anchors:

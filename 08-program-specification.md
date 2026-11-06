@@ -294,6 +294,40 @@ at
 it in IntelliJ with the **PlantUML Integration** (plantuml4idea) plugin
 installed and a live preview renders beside the file as you type.
 
+**1. Nouns**
+
+Kept as classes: `Library`, `Member`, `Item`, `Book`, `DVD`, `ReferenceItem`, `Librarian`, `Hold`, `Catalogue`
+
+Rejected:
+- *title*, *catalogue number*: attributes of `Item`
+- *member number*: attribute of `Member` (used to login)
+- *three weeks*, *one week*: attribute values (loan period of `Book`/`DVD`)
+- *late fee*: attribute of `Member`; has no behaviour of its own
+
+Added but not nouns:
+- `Loan`: "borrow" and "on loan" imply a record of who has what and until when
+- `MemberSession`/`StaffSession`: used to enforce "only librarians can..."
+
+**2. Verb phrases → responsibilities**
+
+| Verb phrase | Owner |
+|---|---|
+| members borrow items | `MemberSession.borrow` -> `Library.borrow` (creates a `Loan`) |
+| has a title / catalogue number | `Item.getTitle`, `Item.getCatalogueNumber` |
+| borrowed for three weeks / one week | `Book.loanPeriod`, `DVD.loanPeriod` |
+| cannot be borrowed at all | `ReferenceItem`: not a `BorrowableItem`, so has no borrow operation |
+| log in with a member number | `Library.memberLogin` |
+| place a hold | `MemberSession.placeHold` -> `Library.placeHold` (creates a `Hold`) |
+| is currently on loan | `BorrowableItem.isOnLoan` |
+| add new items to the catalogue | `StaffSession.addItem` -> `Library.addItem` -> `Catalogue.addItem` |
+| waive a member's late fee | `StaffSession.waiveLateFee` -> `Library.waiveLateFee` -> `Member.clearLateFee` |
+
+**3. Inheritance vs. Interface**
+- *Reference-only vs. borrowable*: difference is about which operations are allowed, so belongs in the type. With a `boolean referenceOnly` field, every borrow/hold would need a runtime check. If `borrow` lived in `Item`, `ReferenceItem` would have to throw, which violates LSP. Splitting `Item` into `ReferenceItem` and `BorrowableItem` lets the compiler reject `borrow(referenceItem)`.
+  - I made `BorrowableItem` an abstract class rather than a `Borrowable` interface because borrowable items share **state** (`onLoan`), and an interface can't hold fields.
+- *Book vs. DVD*: they differ only in loan period, so a `loanPeriodDays` field is sufficient. I used subclasses because books and DVDs may diverge later (author, runtime, etc.). The only cost is a new class per item type.
+- *Member vs Librarian*: the only shared feature is being able to "log in", and the spec doesn't require librarians to be able to borrow. So there's no common supertype. The shared part is in `LibrarySession`; session subtypes decide what each can do.
+
 ### Question 2: Scenario walk-through
 
 Take the diagram you drew in Question 1 and walk through this scenario, step by
@@ -328,6 +362,22 @@ them.
 
 </details>
 
+**A member places a hold on an item that is currently on loan:**
+1. The member logs in: `Library.memberLogin(memberNumber)` finds the `Member` and returns a `MemberSession`.
+2. The member looks up the item: `Library.findItem(catalogueNumber)` -> `Catalogue.findByNumber`, which returns the `Item`. If it's a `BorrowableItem`, it's cast to one and passed on. If it's a `ReferenceItem`, no hold can be placed.
+3. `MemberSession.placeHold(item)` -> `Library.placeHold(member, item)`.
+4. `Library` asks `item.isOnLoan()`. If it isn't on loan, the hold is refused (the spec only allows holds on items that are on loan).
+5. `Library` checks `holds` for a hold whose `getMember()` and `getItem()` match, and refuses a duplicate.
+6. `Library` creates `new Hold(member, item, today)` and adds it to `holds`.
+7. The `Hold` is returned to the session. Later, `MemberSession.getHolds()` -> `Library.holdsFor(member)` finds it by filtering `holds` on `getMember()`.
+
+**Who should know whether an item is on loan?**
+- *`BorrowableItem` (with an `onLoan` flag)*: `item.isOnLoan()` is cheap and obvious, but the same fact is also recorded in `Library.loans`, so the two can get out of sync if, for ex., a return clears one but not the other.
+- *`Library` (derived from `loans`)*: one source of truth, but then the item can't answer by itself, the lookup is a search, and `Loan` needs a way to mark it returned (ex. a `returnDate` or removal from the list).
+- *`BorrowableItem` holds a reference to its current `Loan` (`null` if none)*: answer is still local to the item, and only one record of the loan exists.
+
+I chose to record it twice (`onLoan` and `loans`). I would keep the flag only if every change goes through `Library.borrow` and `Library.returnItem`, which update both.
+
 ### Question 3: From a user story to a use case
 
 Consider a campus study-room booking application.
@@ -360,3 +410,33 @@ Review your draft with these questions:
 * Have you avoided committing prematurely to UI widgets, classes, methods, or database details?
 
 As a scope check, compare the story above with "As a student, I want to manage all of my room bookings," which is likely an epic, and "Build the room-booking form," which is an implementation task. The exercise story sits between them: it expresses one useful, implementable user goal.
+
+**Use Case: Reserve a Study Room**
+
+**Primary actor:** Student
+
+**Preconditions:**
+
+* The student is signed in.
+* The student has selected a room, a date, and a time slot.
+
+**Trigger:** The student asks the system to reserve the selected room for the selected time.
+
+**Success outcome:** A reservation for that room and time exists in the student's
+name, no other reservation overlaps it, and the student has seen a confirmation.
+
+**Main success scenario:**
+
+1. The student asks to reserve the selected room and time.
+2. The system checks that the room is still available at that time.
+3. The system records the reservation for the student.
+4. The system displays a confirmation with the room, date, and time.
+
+**Extensions:**
+
+* **2a.** The room has become unavailable since the student selected it.
+    1. The system tells the student the room is no longer available at that time.
+    2. No reservation is created. The student may choose another room or time, and the use case ends.
+* **3a.** The system cannot record the reservation (for example, the booking service is unreachable).
+    1. The system tells the student the reservation was not made and that they may try again.
+    2. The use case ends. The system's state is unchanged and no reservation exists.

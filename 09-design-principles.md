@@ -193,11 +193,16 @@ In this design, `Manager` does not know anything about `Worker`, nor about `Supe
 
 ## 9.3. Exercise: examples of SOLID in Java
 
- We encourage you to think about what you've learned about how Java works so far — what are some examples of language features that align with the SOLID principles?
+We encourage you to think about what you've learned about how Java works so far — what are some examples of language features that align with the SOLID principles?
 
 For example, which principles align with how Java requires the parent's constructor to be called as part of the child's constructor? Or how generics work? Or the `private` keyword? Or the ability to use an interface as a reference type?
 
 Each time you encounter new code or a UML class diagram, you should begin to assess its design through this new perspective based on the SOLID principles.
+
+- **Calling the parent's constructor (`super(...)`)** -> **LSP**, and to some extent **OCP**. The parent part of every child object is set up the way the parent requires, so the child really is a valid parent and can be substituted for one. The parent is extended without being modified.
+- **Generics** -> **OCP**. `List<T>` is written once and works for types that didn't exist when it was written, with no changes. Bounded types (`<T extends Comparable<T>>`) depend only on an abstraction, which is **DIP**.
+- **`private`** -> **OCP** (and supports **SRP**). Clients can't depend on internals, so a class can change its implementation without breaking them. Its data stays under the control of the one class responsible for it.
+- **An interface as a reference type** (`List<String> l = new ArrayList<>()`) -> **DIP** (depend on the abstraction, not the concrete class), **OCP** (plug in new implementations without editing the client), and **LSP** (any implementation must work wherever the interface type is expected). Implementing several small interfaces instead of one big one is **ISP**.
 
 ## 9.4. Exercises: applying the principles
 
@@ -233,6 +238,9 @@ public class Report {
 ```
 
 Which SOLID principle is most clearly violated here, and how would you fix it?
+
+**SRP.** `Report` has three reasons to change: what the report contains, how files are written, and how email is sent.
+Fix: keep `Report` responsible only for producing the text, and move saving and emailing into `ReportFileWriter` and `ReportEmailer`. Each takes a `Report` (or its text).
 
 <details>
 <summary>Show answer</summary>

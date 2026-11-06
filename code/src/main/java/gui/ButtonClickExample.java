@@ -35,7 +35,15 @@ public class ButtonClickExample {
           JPanel buttonPanel = new JPanel();
           JButton submit = new JButton("Submit");
           buttonPanel.add(submit);
-          buttonPanel.add(new JButton("Cancel"));
+          JButton cancel = new JButton("Cancel");
+          cancel.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                firstNameField.setText("");
+                lastNameField.setText("");
+              }
+          });
+          buttonPanel.add(cancel);
 
           submit.addActionListener(
               new ActionListener() {
